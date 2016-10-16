@@ -1079,6 +1079,7 @@ Iterator* DBImpl::NewInternalIterator(const ReadOptions& options,
     list.push_back(imm_->NewIterator());
     imm_->Ref();
   }
+  // add iterators of memtable, table cache, sorted table file to current version
   versions_->current()->AddIterators(options, &list);
   Iterator* internal_iter =
       NewMergingIterator(&internal_comparator_, &list[0], list.size());
@@ -1230,6 +1231,7 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
         }
       }
       if (status.ok()) {
+        // extract sequence and kType to insert memtable
         status = WriteBatchInternal::InsertInto(updates, mem_);
       }
       mutex_.Lock();
