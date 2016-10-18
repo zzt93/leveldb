@@ -70,6 +70,15 @@ Slice BlockBuilder::Finish() {
   return Slice(buffer_);
 }
 
+    /**
+        // An entry for a particular key-value pair has the form:
+        //     shared_bytes: varint32
+        //     unshared_bytes: varint32
+        //     value_length: varint32
+        //     key_delta: char[unshared_bytes]
+        //     value: char[value_length]
+        // shared_bytes == 0 for restart points.
+     */
 void BlockBuilder::Add(const Slice& key, const Slice& value) {
   Slice last_key_piece(last_key_);
   assert(!finished_);

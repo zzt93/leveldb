@@ -21,6 +21,8 @@ class MemTable {
  public:
   // MemTables are reference counted.  The initial reference count
   // is zero and the caller must call Ref() at least once.
+    // use InternalKeyComparator to wrap user's comparator, add comparison
+    // of sequence number
   explicit MemTable(const InternalKeyComparator& comparator);
 
   // Increase reference count.

@@ -936,6 +936,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
     }
 
     // Handle key/value, add to state, etc.
+      // test whether the key/value should be kept
     bool drop = false;
     if (!ParseInternalKey(key, &ikey)) {
       // Do not hide error keys
@@ -954,12 +955,15 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
 
       if (last_sequence_for_key <= compact->smallest_snapshot) {
         // Hidden by an newer entry for same user key
+          // if it is the first appearance of key, it will be kMaxSequenceNumber;
+          // if it's not, it has smaller sequence number which means older, so
+          // drop it
         drop = true;    // (A)
       } else if (ikey.type == kTypeDeletion &&
                  ikey.sequence <= compact->smallest_snapshot &&
                  compact->compaction->IsBaseLevelForKey(ikey.user_key)) {
         // For this user key:
-        // (1) there is no data in higher levels
+        // (1) there is no data in higher levels --> IsBaseLevelForKey
         // (2) data in lower levels will have larger sequence numbers
         // (3) data in layers that are being compacted here and have
         //     smaller sequence numbers will be dropped in the next
@@ -980,7 +984,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
         (int)last_sequence_for_key, (int)compact->smallest_snapshot);
 #endif
 
-    if (!drop) {
+    if (!drop) { // add this key and value to table_builder
       // Open output file if necessary
       if (compact->builder == NULL) {
         status = OpenCompactionOutputFile(compact);
@@ -988,7 +992,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
           break;
         }
       }
-      if (compact->builder->NumEntries() == 0) {
+      if (compact->builder->NumEntries() == 0) { // empty builder
         compact->current_output()->smallest.DecodeFrom(key);
       }
       compact->current_output()->largest.DecodeFrom(key);

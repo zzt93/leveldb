@@ -1268,7 +1268,7 @@ Iterator* VersionSet::MakeInputIterator(Compaction* c) {
   int num = 0;
   for (int which = 0; which < 2; which++) {
     if (!c->inputs_[which].empty()) {
-      if (c->level() + which == 0) {
+      if (c->level() + which == 0) { // Level-0 files
         const std::vector<FileMetaData*>& files = c->inputs_[which];
         for (size_t i = 0; i < files.size(); i++) {
           list[num++] = table_cache_->NewIterator(
@@ -1288,6 +1288,17 @@ Iterator* VersionSet::MakeInputIterator(Compaction* c) {
   return result;
 }
 
+    /*
+     *  When the size of level L exceeds its limit, we compact it in a
+        background thread.  The compaction picks a file from level L and all
+        overlapping files from the next level L+1.  Note that if a level-L
+        file overlaps only part of a level-(L+1) file, the entire file at
+        level-(L+1) is used as an input to the compaction and will be
+        discarded after the compaction.  Aside: because level-0 is special
+        (files in it may overlap each other), we treat compactions from
+        level-0 to level-1 specially: a level-0 compaction may pick more than
+        one level-0 file in case some of these files overlap each other.
+     */
 Compaction* VersionSet::PickCompaction() {
   Compaction* c;
   int level;
@@ -1337,6 +1348,7 @@ Compaction* VersionSet::PickCompaction() {
     assert(!c->inputs_[0].empty());
   }
 
+  // find related file in level+1
   SetupOtherInputs(c);
 
   return c;
