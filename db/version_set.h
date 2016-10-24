@@ -297,6 +297,7 @@ class VersionSet {
   Env* const env_;
   const std::string dbname_;
   const Options* const options_;
+    // the cache mapping [file_number(string) => TableAndFile]
   TableCache* const table_cache_;
   const InternalKeyComparator icmp_;
   uint64_t next_file_number_;

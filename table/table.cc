@@ -35,6 +35,9 @@ struct Table::Rep {
   Block* index_block;
 };
 
+    /*
+     * read file's block index into memory, so it can
+     */
 Status Table::Open(const Options& options,
                    RandomAccessFile* file,
                    uint64_t size,
@@ -228,8 +231,10 @@ Status Table::InternalGet(const ReadOptions& options, const Slice& k,
                           void (*saver)(void*, const Slice&, const Slice&)) {
   Status s;
   Iterator* iiter = rep_->index_block->NewIterator(rep_->options.comparator);
+  // find the suitable block to read by searching the index
   iiter->Seek(k);
   if (iiter->Valid()) {
+    // the string of block offset and size
     Slice handle_value = iiter->value();
     FilterBlockReader* filter = rep_->filter;
     BlockHandle handle;

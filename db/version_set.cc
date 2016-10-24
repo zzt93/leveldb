@@ -353,6 +353,7 @@ Status Version::Get(const ReadOptions& options,
     if (num_files == 0) continue;
 
     // Get the list of files to search in this level
+    // by comparing the data/index in `files`
     FileMetaData* const* files = &files_[level][0];
     if (level == 0) {
       // Level-0 files may overlap each other.  Find all files that
