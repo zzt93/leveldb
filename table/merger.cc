@@ -190,6 +190,8 @@ Iterator* NewMergingIterator(const Comparator* cmp, Iterator** list, int n) {
   } else if (n == 1) {
     return list[0];
   } else {
+    // merge file using lazy iterator which contains
+    // sorted table file index and ready to read file
     return new MergingIterator(cmp, list, n);
   }
 }

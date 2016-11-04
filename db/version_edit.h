@@ -14,6 +14,8 @@ namespace leveldb {
 
 class VersionSet;
 
+    // the abstraction of sorted table file
+    // @see Table -- abstraction of sorted table's content
 struct FileMetaData {
   int refs;
   int allowed_seeks;          // Seeks allowed until compaction

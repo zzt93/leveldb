@@ -20,6 +20,10 @@ Arena::~Arena() {
   }
 }
 
+    // allocate a big chunk once, and use Arena to re-allocate it again
+    // This is done to avoid wasteful memory fragmentation.
+    // The Arena approach for allocating memory aims to provide better performance than
+    // directly using the C/C++ new/delete memory management routines.
 char* Arena::AllocateFallback(size_t bytes) {
   if (bytes > kBlockSize / 4) {
     // Object is more than a quarter of our block size.  Allocate it separately

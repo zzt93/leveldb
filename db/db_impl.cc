@@ -518,6 +518,7 @@ Status DBImpl::WriteLevel0Table(MemTable* mem, VersionEdit* edit,
     const Slice min_user_key = meta.smallest.user_key();
     const Slice max_user_key = meta.largest.user_key();
     if (base != NULL) {
+      // promote this sorted table to higher level if meets the requirement
       level = base->PickLevelForMemTableOutput(min_user_key, max_user_key);
     }
     edit->AddFile(level, meta.number, meta.file_size,
@@ -535,10 +536,11 @@ void DBImpl::CompactMemTable() {
   mutex_.AssertHeld();
   assert(imm_ != NULL);
 
-  // Save the contents of the memtable as a new Table
+  // Save the contents of the memtable as a new Table -- sorted table
   VersionEdit edit;
   Version* base = versions_->current();
   base->Ref();
+  // write level0 sorted table and promote to higher level
   Status s = WriteLevel0Table(imm_, &edit, base);
   base->Unref();
 
@@ -691,10 +693,11 @@ void DBImpl::BackgroundCompaction() {
     return;
   }
 
+  // decide the compaction detail
   Compaction* c;
   bool is_manual = (manual_compaction_ != NULL);
   InternalKey manual_end;
-  if (is_manual) {
+  if (is_manual) { // user invoke CompactRange()
     ManualCompaction* m = manual_compaction_;
     c = versions_->CompactRange(m->level, m->begin, m->end);
     m->done = (c == NULL);
@@ -733,6 +736,7 @@ void DBImpl::BackgroundCompaction() {
         status.ToString().c_str(),
         versions_->LevelSummary(&tmp));
   } else {
+    // really a complex compaction
     CompactionState* compact = new CompactionState(c);
     status = DoCompactionWork(compact);
     if (!status.ok()) {
@@ -906,6 +910,7 @@ Status DBImpl::DoCompactionWork(CompactionState* compact) {
   // Release mutex while we're actually doing the compaction work
   mutex_.Unlock();
 
+  // iterator of merging two levels's file
   Iterator* input = versions_->MakeInputIterator(compact->compaction);
   input->SeekToFirst();
   Status status;
